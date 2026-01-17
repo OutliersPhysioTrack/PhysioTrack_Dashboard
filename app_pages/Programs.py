@@ -17,7 +17,6 @@ def _progression_rule_item(title: str, rule_text: str, toggle_key: str, default_
             st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
             st.toggle("Enabled", value=default_enabled, key=toggle_key)
 
-
 def _progression_rules_card():
     with st.container(border=True):
         st.markdown("<div class='card-title'>Progression Rules</div>", unsafe_allow_html=True)

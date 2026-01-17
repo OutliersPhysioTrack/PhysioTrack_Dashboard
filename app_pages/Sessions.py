@@ -16,7 +16,6 @@ def _inject_session_review_css():
         .sr-name{ font-size: 18px; font-weight: 800; color:#2B3674; line-height: 1.2; }
         .sr-meta{ color:#A3AED0; font-size:12px; margin-top:4px; line-height:1.35; }
 
-        /* ✅ REVISED: 3 metrics only */
         .sr-metrics{ margin-top: 14px; display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 
         .sr-metric .lbl{ color:#A3AED0; font-size:12px; line-height:1.2; }
@@ -49,7 +48,6 @@ def _inject_session_review_css():
           font-size:14px;
         }
 
-        /* ✅ ADDED: make highlight video smaller */
         .sr-video-wrap{
           margin-top: 12px;
           width: 100%;
@@ -78,37 +76,9 @@ def _rep_by_rep_df(repo, session_id: str, session_summary: dict) -> tuple[pd.Dat
         df = repo.list_rep_metrics(session_id)
     except Exception:
         df = None
-
     if df is None or len(df) == 0:
-        import random
-
-        reps = 30  
-
-        seed = sum(ord(c) for c in str(session_id)) % 100000 or 12345
-        r = random.Random(seed)
-
-        start_rom = r.uniform(35.0, 50.0)     
-        peak_rom = r.uniform(75.0, 95.0)       
-        fatigue_drop = r.uniform(4.0, 10.0)    
-        noise_amp = r.uniform(1.0, 2.8)        
-
-        roms: list[float] = []
-        for i in range(1, reps + 1):
-            ramp = min(i / 10.0, 1.0)
-            base = start_rom + ramp * (peak_rom - start_rom)
-
-            fatigue = 0.0
-            if i > 20:
-                fatigue = ((i - 20) / 10.0) * fatigue_drop  
-
-            noise = r.uniform(-noise_amp, noise_amp)
-            rom = base - fatigue + noise
-
-            rom = max(20.0, min(125.0, rom))
-            roms.append(round(rom, 1))
-
-        df = pd.DataFrame({"rep_index": list(range(1, reps + 1)), "rom_deg": roms})
-        subtitle = "Rep-by-rep details are not available yet — showing a demo ROM curve (30 reps)."
+        df = pd.DataFrame(columns=["rep_index", "rom_deg"])
+        subtitle = "Rep-by-rep ROM is not available for this session."
 
     if "rep_index" not in df.columns:
         df["rep_index"] = list(range(1, len(df) + 1))

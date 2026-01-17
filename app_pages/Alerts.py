@@ -5,6 +5,7 @@ from views.cards import section_title, kpi_card
 from views.tables import alert_cards
 
 
+
 def render(repo):
     section_title("Alerts Center", "Monitor and triage patient alerts requiring attention", right_html="")
 

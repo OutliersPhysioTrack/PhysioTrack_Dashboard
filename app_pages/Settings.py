@@ -22,7 +22,6 @@ def _safe_list_users(repo) -> pd.DataFrame:
         pass
     return pd.DataFrame()
 
-
 def render(repo):
     st.title("Settings")
     st.caption("Manage users and system preferences")

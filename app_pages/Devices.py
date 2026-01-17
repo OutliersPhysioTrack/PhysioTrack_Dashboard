@@ -26,6 +26,7 @@ def render(repo):
 
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
+
     did = devices_table(df)
     if not did:
         return

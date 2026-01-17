@@ -199,7 +199,92 @@ class ApiRepo:
         }
 
     def list_rep_metrics(self, session_id: str) -> pd.DataFrame:
-        return pd.DataFrame(columns=["rep_index", "rom_deg"])
+        if not session_id:
+            return pd.DataFrame(columns=["rep_index", "rom_deg"])
+
+        def _normalize_items(payload: Any) -> list[dict]:
+            if payload is None:
+                return []
+            if isinstance(payload, list):
+                return [x for x in payload if isinstance(x, dict)]
+            if isinstance(payload, dict):
+                for k in ("items", "data", "results", "reps"):
+                    v = payload.get(k)
+                    if isinstance(v, list):
+                        return [x for x in v if isinstance(x, dict)]
+                # kadang 1 record langsung
+                if any(k in payload for k in ("rep_index", "rep", "index", "rom_deg", "rom", "rom_degree", "rom_degrees")):
+                    return [payload]
+            return []
+
+        candidates: list[tuple[str, Optional[dict]]] = [
+            (f"/sessions/{session_id}/rep-metrics", None),
+            (f"/sessions/{session_id}/rep_metrics", None),
+            (f"/sessions/{session_id}/reps", None),
+            (f"/sessions/{session_id}/metrics/reps", None),
+            ("/rep-metrics", {"session_id": session_id}),
+            ("/rep_metrics", {"session_id": session_id}),
+            ("/metrics/reps", {"session_id": session_id}),
+            ("/sessions/rep-metrics", {"session_id": session_id}),
+        ]
+
+        payload = None
+        items: list[dict] = []
+        for path, params in candidates:
+            try:
+                payload = self._get(path, params=params)
+                items = _normalize_items(payload)
+                if items:
+                    break
+            except Exception:
+                continue
+
+        if not items:
+            return pd.DataFrame(columns=["rep_index", "rom_deg"])
+
+        rows: list[dict] = []
+        for it in items:
+            rep_raw = it.get("rep_index")
+            if rep_raw is None:
+                rep_raw = it.get("rep")
+            if rep_raw is None:
+                rep_raw = it.get("index")
+
+            rom_raw = it.get("rom_deg")
+            if rom_raw is None:
+                rom_raw = it.get("rom")
+            if rom_raw is None:
+                rom_raw = it.get("rom_degree")
+            if rom_raw is None:
+                rom_raw = it.get("rom_degrees")
+
+            try:
+                rep_i = int(rep_raw) if rep_raw is not None else None
+            except Exception:
+                rep_i = None
+
+            try:
+                rom = float(rom_raw) if rom_raw is not None else None
+            except Exception:
+                rom = None
+
+            if rep_i is None and rom is None:
+                continue
+
+            rows.append({"rep_index": rep_i, "rom_deg": rom})
+
+        df = pd.DataFrame(rows)
+        if len(df) == 0:
+            return pd.DataFrame(columns=["rep_index", "rom_deg"])
+
+        if "rep_index" not in df.columns or df["rep_index"].isna().all():
+            df["rep_index"] = list(range(1, len(df) + 1))
+
+        df["rep_index"] = pd.to_numeric(df["rep_index"], errors="coerce")
+        df["rom_deg"] = pd.to_numeric(df["rom_deg"], errors="coerce")
+
+        df = df.dropna(subset=["rep_index"]).sort_values("rep_index").reset_index(drop=True)
+        return df[["rep_index", "rom_deg"]]
 
     # ---------- devices ----------
     def list_devices(self) -> pd.DataFrame:

@@ -16,7 +16,6 @@ def _fmt(v, suffix: str = "") -> str:
         pass
     return f"{v}{suffix}"
 
-
 def _baseline_current(sessions: pd.DataFrame, col: str):
     if sessions is None or len(sessions) == 0 or col not in sessions.columns:
         return (None, None)

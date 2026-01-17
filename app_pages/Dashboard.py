@@ -13,7 +13,6 @@ from services.metrics import (
     chart_grip_improvement,
 )
 
-
 def _dedent(html: str) -> str:
     return textwrap.dedent(html).strip()
 
